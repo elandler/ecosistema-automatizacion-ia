@@ -18,10 +18,8 @@
         "operation": "getAll",
         "dataSourceId": {
           "__rl": true,
-          "value": "8549ef1f-77e7-8369-90a3-079126437d0a",
-          "mode": "list",
-          "cachedResultName": "FINAL - Contenidos",
-          "cachedResultUrl": "https://app.notion.com/p/eb69ef1f77e78261b64a01a536bfe20d"
+          "value": "CONFIGURAR_DATASOURCE_CONTENIDOS",
+          "mode": "id"
         },
         "limit": 1,
         "filterType": "manual",
@@ -44,13 +42,7 @@
         -16
       ],
       "id": "815a0551-956e-4cd3-b4f6-1c8535b83da2",
-      "name": "A-02 | Notion | Buscar contenidos",
-      "credentials": {
-        "notionApi": {
-          "id": "6FcS4XRClCLKEISz",
-          "name": "Notion account 3"
-        }
-      }
+      "name": "A-02 | Notion | Buscar contenidos"
     },
     {
       "parameters": {
@@ -94,7 +86,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1120,
+        1104,
         -192
       ],
       "id": "de6a94bd-51df-43e0-8104-23d162ec1d5e",
@@ -134,13 +126,7 @@
         -32
       ],
       "id": "d36c16ab-4310-44bc-808f-1619d36e161b",
-      "name": "A-06 | Notion | Registrar validación fallida",
-      "credentials": {
-        "notionApi": {
-          "id": "6FcS4XRClCLKEISz",
-          "name": "Notion account 3"
-        }
-      }
+      "name": "A-06 | Notion | Registrar validación fallida"
     },
     {
       "parameters": {
@@ -172,20 +158,13 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 2.3,
       "position": [
-        1536,
+        1440,
         -208
       ],
       "id": "d9a5b0f6-b023-4ab9-97f5-f4b1c7d4172e",
       "name": "A-07 | OpenAI | Clasificar contenido",
       "retryOnFail": true,
       "maxTries": 3,
-      "credentials": {
-        "openAiApi": {
-          "id": null,
-          "name": "",
-          "__aiGatewayManaged": true
-        }
-      },
       "onError": "continueErrorOutput"
     },
     {
@@ -196,8 +175,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1776,
-        -368
+        1584,
+        -496
       ],
       "id": "769f5e66-e374-46ef-843b-1c0382d9c2f1",
       "name": "A-08 | Validación | Verificar clasificación IA"
@@ -231,8 +210,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.5,
       "position": [
-        1952,
-        -400
+        1968,
+        -592
       ],
       "id": "8c8c7854-df4b-4c3b-b5bd-9229779acc15",
       "name": "A-09 | Datos | Preparar clasificación"
@@ -264,17 +243,11 @@
       "typeVersion": 3,
       "position": [
         2112,
-        -272
+        -288
       ],
       "id": "a9329011-b687-442d-b263-3be6b51120cc",
       "name": "A-10 | Notion | Guardar clasificación",
       "retryOnFail": true,
-      "credentials": {
-        "notionApi": {
-          "id": "6FcS4XRClCLKEISz",
-          "name": "Notion account 3"
-        }
-      },
       "onError": "continueErrorOutput"
     },
     {
@@ -283,10 +256,8 @@
         "operation": "getAll",
         "dataSourceId": {
           "__rl": true,
-          "value": "a329ef1f-77e7-83ad-aaff-07c12eaaf190",
-          "mode": "list",
-          "cachedResultName": "FINAL - Conocimientos",
-          "cachedResultUrl": "https://app.notion.com/p/3f79ef1f77e7802b9163f87434df054e"
+          "value": "CONFIGURAR_DATASOURCE_CONOCIMIENTOS",
+          "mode": "id"
         },
         "returnAll": true,
         "filterType": "manual",
@@ -308,13 +279,7 @@
         -384
       ],
       "id": "a2f0b56a-7ed2-4c76-bab0-0cfa9bc4b1be",
-      "name": "A-11 | Notion | Buscar conocimientos",
-      "credentials": {
-        "notionApi": {
-          "id": "6FcS4XRClCLKEISz",
-          "name": "Notion account 3"
-        }
-      }
+      "name": "A-11 | Notion | Buscar conocimientos"
     },
     {
       "parameters": {
@@ -367,13 +332,6 @@
       "id": "5d46484c-d645-45fc-82b4-235cc8f44e54",
       "name": "A-13 | OpenAI | Generar borrador",
       "retryOnFail": true,
-      "credentials": {
-        "openAiApi": {
-          "id": null,
-          "name": "",
-          "__aiGatewayManaged": true
-        }
-      },
       "onError": "continueErrorOutput"
     },
     {
@@ -487,9 +445,8 @@
         "select": "channel",
         "channelId": {
           "__rl": true,
-          "value": "C0C322TUW03",
-          "mode": "list",
-          "cachedResultName": "todo-desarrolloeducativo"
+          "value": "CONFIGURAR_CANAL_SLACK",
+          "mode": "id"
         },
         "text": "={{\n\"📝 NUEVO BORRADOR PENDIENTE DE REVISIÓN\\n\\n\" +\n\"Asunto: \" + $('A-15 | Datos | Preparar borrador').item.json.asunto_ia +\n\"\\n\\nEstado: En revisión\" +\n\"\\nFuentes utilizadas: \" + $('A-15 | Datos | Preparar borrador').item.json.fuentes_utilizadas +\n\"\\n\\nRevisar contenido en Notion:\\n\" +\n\"https://www.notion.so/\" +\n$('A-15 | Datos | Preparar borrador').item.json.id_notion.replace(/-/g, \"\") +\n\"\\n\\nLa aprobación debe realizarse en Notion.\"\n}}",
         "otherOptions": {}
@@ -504,12 +461,6 @@
       "name": "A-18 | Slack | Notificar revisión pendiente1",
       "webhookId": "9def6df9-4eaf-4528-b30c-1f39ff6576ef",
       "retryOnFail": true,
-      "credentials": {
-        "slackOAuth2Api": {
-          "id": "nNpmKaeFIAEot1iz",
-          "name": "Slack account"
-        }
-      },
       "onError": "continueErrorOutput"
     },
     {
@@ -557,12 +508,6 @@
       "name": "A-17 NUEVO | Notion | Guardar borrador para revisión 3.",
       "retryOnFail": true,
       "maxTries": 3,
-      "credentials": {
-        "notionApi": {
-          "id": "6FcS4XRClCLKEISz",
-          "name": "Notion account 3"
-        }
-      },
       "onError": "continueErrorOutput"
     },
     {
@@ -591,17 +536,11 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 3,
       "position": [
-        1328,
-        -336
+        1280,
+        -320
       ],
       "id": "794ce431-2039-4c09-ba93-053402040d95",
-      "name": "A-05B | Notion | Marcar como En proceso",
-      "credentials": {
-        "notionApi": {
-          "id": "6FcS4XRClCLKEISz",
-          "name": "Notion account 3"
-        }
-      }
+      "name": "A-05B | Notion | Marcar como En proceso"
     },
     {
       "parameters": {
@@ -611,23 +550,123 @@
         "nodeCredentialType": "notionApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"properties\": {\n    \"Estado\": {\n      \"select\": {\n        \"name\": \"Error\"\n      }\n    },\n    \"Error\": {\n      \"rich_text\": [\n        {\n          \"text\": {\n            \"content\": \"{{ $json.error?.message || $json.error?.description || $json.error || 'Error desconocido' }}\"\n          }\n        }\n      ]\n    },\n    \"Ultima ejecucion\": {\n      \"date\": {\n        \"start\": \"{{ $now.toISO() }}\"\n      }\n    }\n  }\n}",
+        "jsonBody": "={{ ({\n  properties: {\n    Estado: {\n      select: { name: 'Error' }\n    },\n    Error: {\n      rich_text: [\n        {\n          text: {\n            content: String(\n              $json.error?.message\n              || $json.error?.description\n              || JSON.stringify($json.error ?? $json)\n              || 'Error desconocido'\n            ).slice(0, 2000)\n          }\n        }\n      ]\n    },\n    'Ultima ejecucion': {\n      date: { start: $now.toISO() }\n    }\n  }\n}) }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        4304,
-        288
+        4208,
+        144
       ],
       "id": "33585df4-9663-46cb-9a6a-bd55450f1271",
-      "name": "A-ERR | HTTP | Registrar fallo técnico",
-      "credentials": {
-        "notionApi": {
-          "id": "6FcS4XRClCLKEISz",
-          "name": "Notion account 3"
-        }
-      }
+      "name": "A-ERR | HTTP | Registrar fallo técnico"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "baadba05-9186-4451-ab84-11ea9ffbaf94",
+              "leftValue": "={{ $json.clasificacion_validada.es_valida }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1744,
+        -592
+      ],
+      "id": "50c9e979-7ee5-4c4b-80d4-298079a49e75",
+      "name": "A-08B | Control | ¿Clasificación válida?"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('A-04 | Validación | Verificar datos').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Error"
+            },
+            {
+              "key": "Error|rich_text",
+              "textContent": "={{ 'Clasificación IA inválida: ' + $json.clasificacion_validada.errores.join('; ') }}"
+            },
+            {
+              "key": "Ultima ejecucion|date",
+              "date": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1904,
+        -384
+      ],
+      "id": "fa556189-9b53-4d39-96b8-10f1ab98cb1f",
+      "name": "A-08C | Notion | Registrar clasificación inválida"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('A-04 | Validación | Verificar datos').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Error"
+            },
+            {
+              "key": "Error|rich_text",
+              "textContent": "={{ $('A-14 | Validación | Verificar borrador IA').first().json.borrador_validado.es_valido ? 'La IA devolvió No generado: no se obtuvo un borrador con los conocimientos proporcionados.' : 'Borrador IA inválido: ' + $('A-14 | Validación | Verificar borrador IA').first().json.borrador_validado.errores.join('; ') }}"
+            },
+            {
+              "key": "Ultima ejecucion|date",
+              "date": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        3680,
+        -240
+      ],
+      "id": "0246659d-5225-4fe7-b638-3945401f1578",
+      "name": "A-16B | Notion | Registrar borrador no generado o inválido"
     }
   ],
   "pinData": {},
@@ -705,7 +744,7 @@
       "main": [
         [
           {
-            "node": "A-09 | Datos | Preparar clasificación",
+            "node": "A-08B | Control | ¿Clasificación válida?",
             "type": "main",
             "index": 0
           }
@@ -812,7 +851,13 @@
             "index": 0
           }
         ],
-        []
+        [
+          {
+            "node": "A-16B | Notion | Registrar borrador no generado o inválido",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "A-17 NUEVO | Notion | Guardar borrador para revisión 3.": {
@@ -855,6 +900,29 @@
           }
         ]
       ]
+    },
+    "A-08B | Control | ¿Clasificación válida?": {
+      "main": [
+        [
+          {
+            "node": "A-09 | Datos | Preparar clasificación",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "A-08C | Notion | Registrar clasificación inválida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-08C | Notion | Registrar clasificación inválida": {
+      "main": [
+        []
+      ]
     }
   },
   "active": false,
@@ -862,12 +930,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "d2819a27-87c1-4e37-ad21-8ee440d3df4d",
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "63f82e453fd280d4c626fe13b3b93ad983da7db9bb61c6d899c14737f5b273f8"
-  },
   "nodeGroups": [],
-  "id": "ehfQ5l6NPoQRTcb9",
   "tags": []
 }
+
