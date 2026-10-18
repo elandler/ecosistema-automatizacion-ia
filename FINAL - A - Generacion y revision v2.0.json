@@ -1,0 +1,873 @@
+{
+  "name": "FINAL - A - Generacion y revision",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        544,
+        -128
+      ],
+      "id": "4033a1c5-1a8a-40a3-9847-2570c060585e",
+      "name": "A-01 | Inicio | Disparador manual"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "8549ef1f-77e7-8369-90a3-079126437d0a",
+          "mode": "list",
+          "cachedResultName": "FINAL - Contenidos",
+          "cachedResultUrl": "https://app.notion.com/p/eb69ef1f77e78261b64a01a536bfe20d"
+        },
+        "limit": 1,
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "key": "Estado|select",
+              "condition": "equals",
+              "optionValue": "Pendiente"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        736,
+        -16
+      ],
+      "id": "815a0551-956e-4cd3-b4f6-1c8535b83da2",
+      "name": "A-02 | Notion | Buscar contenidos",
+      "credentials": {
+        "notionApi": {
+          "id": "6FcS4XRClCLKEISz",
+          "name": "Notion account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Obtener el registro actual de Notion\nconst registro = $input.item.json;\n\n// Recuperar los campos necesarios\nconst id = registro.id;\nconst idea = registro.property_idea_tema;\nconst nombre = registro.property_nombre_destinatario;\nconst email = registro.property_email_destinatario;\n\n// Acumular los errores encontrados\nconst errores = [];\n\n// Validaciones obligatorias\nif (!id || String(id).trim() === '') {\n  errores.push('Falta el identificador de Notion');\n}\n\nif (!idea || String(idea).trim() === '') {\n  errores.push('Falta la idea o tema');\n}\n\nif (!nombre || String(nombre).trim() === '') {\n  errores.push('Falta el nombre del destinatario');\n}\n\nif (!email || String(email).trim() === '') {\n  errores.push('Falta el correo electrónico');\n} else {\n  // Validación básica del formato del correo\n  const formatoEmail = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n\n  if (!formatoEmail.test(String(email).trim())) {\n    errores.push('El correo electrónico tiene un formato inválido');\n  }\n}\n\n// Determinar si la solicitud puede continuar\nconst esValido = errores.length === 0;\n\n// Devolver los datos originales y el resultado\nreturn {\n  json: {\n    ...registro,\n    validacion: {\n      es_valido: esValido,\n      errores: errores,\n      cantidad_errores: errores.length\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        -80
+      ],
+      "id": "5444b9c4-718f-4379-8b16-4c3d48ce3373",
+      "name": "A-04 | Validación | Verificar datos"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "91789770-049a-4a7c-bafa-b779ac42e224",
+              "leftValue": "={{ $json.validacion.es_valido }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1120,
+        -192
+      ],
+      "id": "de6a94bd-51df-43e0-8104-23d162ec1d5e",
+      "name": "A-05 | Control | ¿Datos válidos?"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Error"
+            },
+            {
+              "key": "Error|rich_text",
+              "textContent": "={{ $json.validacion.errores.join('; ') }}"
+            },
+            {
+              "key": "Ultima ejecucion|date",
+              "date": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1344,
+        -32
+      ],
+      "id": "d36c16ab-4310-44bc-808f-1619d36e161b",
+      "name": "A-06 | Notion | Registrar validación fallida",
+      "credentials": {
+        "notionApi": {
+          "id": "6FcS4XRClCLKEISz",
+          "name": "Notion account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "images": {
+          "values": []
+        },
+        "modelId": {
+          "__rl": true,
+          "value": "=gpt-4o-mini",
+          "mode": "id"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Sos un clasificador de solicitudes de contenido para Impulso Automatización, una consultora ficticia orientada a pequeñas empresas.\n\nTu única tarea es clasificar la idea recibida en una de estas tres categorías:\n\n- Educativo: contenidos que explican conceptos, enseñan procedimientos o brindan recomendaciones prácticas.\n- Comercial: contenidos orientados a promocionar servicios, generar oportunidades comerciales o incentivar una contratación.\n- Institucional: contenidos relacionados con la identidad, valores, novedades o presentación de la organización.\n\nElegí una sola categoría, considerando la intención principal de la solicitud.\n\nRespondé exclusivamente con un objeto JSON válido, sin bloques Markdown ni texto adicional, utilizando exactamente esta estructura:\n\n{\n  \"clasificacion\": \"Educativo\",\n  \"justificacion\": \"Explicación breve de la decisión\"\n}\n\nLa clasificación debe ser exactamente Educativo, Comercial o Institucional.\n\nLa justificación debe ser breve y estar basada únicamente en la idea recibida.\n\nNo inventes información adicional."
+            },
+            {
+              "content": "={{ $node[\"A-04 | Validación | Verificar datos\"].json.property_idea_tema }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "maxTokens": 200,
+          "truncation": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1536,
+        -208
+      ],
+      "id": "d9a5b0f6-b023-4ab9-97f5-f4b1c7d4172e",
+      "name": "A-07 | OpenAI | Clasificar contenido",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const respuesta = $input.item.json;\n\nconst contenido = respuesta.output?.[0]?.content?.[0]?.text;\n\nlet datos = null;\n\n// La IA devuelve la clasificación como texto JSON,\n// por lo que debemos convertirla a objeto.\nif (typeof contenido === 'string') {\n  try {\n    datos = JSON.parse(contenido);\n  } catch (e) {\n    datos = null;\n  }\n} else if (contenido && typeof contenido === 'object') {\n  datos = contenido;\n}\n\nconst categoriasValidas = [\n  'Educativo',\n  'Comercial',\n  'Institucional'\n];\n\nconst clasificacion = datos?.clasificacion;\nconst justificacion = datos?.justificacion;\n\nconst errores = [];\n\nif (!categoriasValidas.includes(clasificacion)) {\n  errores.push('La clasificación no es válida');\n}\n\nif (\n  typeof justificacion !== 'string' ||\n  justificacion.trim() === ''\n) {\n  errores.push('Falta la justificación');\n}\n\nreturn {\n  json: {\n    ...respuesta,\n    clasificacion_validada: {\n      es_valida: errores.length === 0,\n      clasificacion: clasificacion ?? null,\n      justificacion: justificacion ?? null,\n      errores\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1776,
+        -368
+      ],
+      "id": "769f5e66-e374-46ef-843b-1c0382d9c2f1",
+      "name": "A-08 | Validación | Verificar clasificación IA"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b3d56774-c7aa-4011-867d-d13a9584bf79",
+              "name": "id_notion",
+              "value": "={{ $('A-04 | Validación | Verificar datos').item.json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "05956186-e4df-41ae-904e-afd0e4d02785",
+              "name": "clasificacion",
+              "value": "={{ $json.clasificacion_validada.clasificacion }}",
+              "type": "string"
+            },
+            {
+              "id": "06fb2080-f732-4b8c-b395-23ecb826fb6b",
+              "name": "justificacion",
+              "value": "={{ $json.clasificacion_validada.justificacion }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1952,
+        -400
+      ],
+      "id": "8c8c7854-df4b-4c3b-b5bd-9229779acc15",
+      "name": "A-09 | Datos | Preparar clasificación"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $json.id_notion }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Clasificacion|select",
+              "selectValue": "={{ $json.clasificacion }}"
+            },
+            {
+              "key": "Justificacion clasificacion|rich_text",
+              "textContent": "={{ $json.justificacion }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2112,
+        -272
+      ],
+      "id": "a9329011-b687-442d-b263-3be6b51120cc",
+      "name": "A-10 | Notion | Guardar clasificación",
+      "retryOnFail": true,
+      "credentials": {
+        "notionApi": {
+          "id": "6FcS4XRClCLKEISz",
+          "name": "Notion account 3"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "a329ef1f-77e7-83ad-aaff-07c12eaaf190",
+          "mode": "list",
+          "cachedResultName": "FINAL - Conocimientos",
+          "cachedResultUrl": "https://app.notion.com/p/3f79ef1f77e7802b9163f87434df054e"
+        },
+        "returnAll": true,
+        "filterType": "manual",
+        "filters": {
+          "conditions": [
+            {
+              "key": "Activo|checkbox",
+              "condition": "equals",
+              "checkboxValue": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2336,
+        -384
+      ],
+      "id": "a2f0b56a-7ed2-4c76-bab0-0cfa9bc4b1be",
+      "name": "A-11 | Notion | Buscar conocimientos",
+      "credentials": {
+        "notionApi": {
+          "id": "6FcS4XRClCLKEISz",
+          "name": "Notion account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Obtener la clasificación validada previamente\nconst categoria = $('A-09 | Datos | Preparar clasificación')\n  .item.json.clasificacion;\n\n// Obtener todos los conocimientos activos recuperados de Notion\nconst conocimientos = $input.all().map(item => item.json);\n\n// Seleccionar conocimientos generales y de la categoría solicitada\nconst seleccionados = conocimientos\n  .filter(k =>\n    k.property_activo === true &&\n    (\n      k.property_categoria === 'General' ||\n      k.property_categoria === categoria\n    )\n  )\n  .sort((a, b) =>\n    a.property_tema.localeCompare(\n      b.property_tema,\n      'es',\n      { numeric: true }\n    )\n  );\n\n// Preparar el contexto que recibirá OpenAI\nconst contexto = seleccionados.map(k => ({\n  tema: k.property_tema,\n  tipo: k.property_tipo,\n  categoria: k.property_categoria,\n  contenido: k.property_contenido\n}));\n\nreturn [{\n  json: {\n    categoria,\n    cantidad_conocimientos: contexto.length,\n    conocimientos: contexto,\n    contexto_ia: contexto.map(k =>\n      `[${k.tema}] (${k.tipo} / ${k.categoria})\\n${k.contenido}`\n    ).join('\\n\\n')\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2512,
+        -384
+      ],
+      "id": "fe3bbcd8-5d05-4807-97a2-63d5129b2568",
+      "name": "A-12 | Conocimiento | Filtrar por categoría"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Sos un asistente de redacción para Impulso Automatización, una consultora ficticia orientada a pequeñas empresas.\n\nTu tarea es generar un borrador de comunicación a partir de una solicitud y de una base de conocimientos proporcionada.\n\nREGLAS OBLIGATORIAS:\n\n1. Utilizá exclusivamente la información incluida en los conocimientos proporcionados.\n2. Respetá las reglas de tono, comunicación y límites que figuren en esos conocimientos.\n3. No inventes precios, descuentos, estadísticas, testimonios, certificaciones, resultados ni características de servicios.\n4. No utilices información externa ni supongas datos que no estén documentados.\n5. El contenido debe responder a la intención de la solicitud y ser adecuado para pequeñas empresas.\n6. Incluí un asunto breve y un cuerpo de texto claro, útil y coherente.\n7. Identificá las fuentes utilizadas mediante sus códigos K01, K02, etc. Incluí únicamente fuentes realmente utilizadas.\n8. Todo contenido generado requiere revisión y aprobación humana antes de su distribución.\n9. Si los conocimientos disponibles no permiten elaborar un contenido pertinente sin inventar información, no generes un borrador.\n\nRespondé exclusivamente con un objeto JSON válido, sin bloques Markdown ni explicaciones adicionales, con esta estructura:\n\n{\n  \"resultado\": \"Generado\",\n  \"asunto\": \"Asunto propuesto\",\n  \"cuerpo\": \"Texto completo del borrador\",\n  \"fuentes\": [\"K01\", \"K02\"]\n}\n\nEl campo \"resultado\" solo puede ser \"Generado\" o \"No generado\".\n\nSi la información es insuficiente, respondé:\n\n{\n  \"resultado\": \"No generado\",\n  \"asunto\": \"\",\n  \"cuerpo\": \"\",\n  \"fuentes\": []\n}\n\nNo agregues propiedades adicionales."
+            },
+            {
+              "content": "={{ \n\"IDEA O TEMA:\\n\" +\n$('A-04 | Validación | Verificar datos').item.json.property_idea_tema +\n\"\\n\\nCLASIFICACIÓN:\\n\" +\n$json.categoria +\n\"\\n\\nCONOCIMIENTOS AUTORIZADOS:\\n\" +\n$json.contexto_ia\n}}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "maxTokens": 600,
+          "textFormat": {
+            "textOptions": {
+              "type": "json_object"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        2688,
+        -368
+      ],
+      "id": "5d46484c-d645-45fc-82b4-235cc8f44e54",
+      "name": "A-13 | OpenAI | Generar borrador",
+      "retryOnFail": true,
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const respuesta = $input.item.json;\n\nconst contenido = respuesta.output?.[0]?.content?.[0]?.text;\n\nlet borrador = null;\n\n// La IA devuelve el borrador como texto JSON;\n// hay que convertirlo a objeto antes de validarlo.\nif (typeof contenido === 'string') {\n  try {\n    borrador = JSON.parse(contenido);\n  } catch (e) {\n    borrador = null;\n  }\n} else if (contenido && typeof contenido === 'object') {\n  borrador = contenido;\n}\n\nconst errores = [];\nconst resultadosValidos = ['Generado', 'No generado'];\n\nif (!borrador || typeof borrador !== 'object') {\n  errores.push('La IA no devolvió un objeto JSON válido');\n}\n\nconst resultado = borrador?.resultado;\nconst asunto = borrador?.asunto;\nconst cuerpo = borrador?.cuerpo;\nconst fuentes = borrador?.fuentes;\n\nif (!resultadosValidos.includes(resultado)) {\n  errores.push('Resultado no permitido');\n}\n\nif (!Array.isArray(fuentes)) {\n  errores.push('Las fuentes deben ser un arreglo');\n}\n\nif (resultado === 'Generado') {\n  if (typeof asunto !== 'string' || !asunto.trim()) {\n    errores.push('Falta el asunto');\n  }\n\n  if (typeof cuerpo !== 'string' || !cuerpo.trim()) {\n    errores.push('Falta el cuerpo');\n  }\n\n  if (!Array.isArray(fuentes) || fuentes.length === 0) {\n    errores.push('No se declararon fuentes');\n  }\n}\n\nif (resultado === 'No generado') {\n  if (asunto !== '' || cuerpo !== '' ||\n      !Array.isArray(fuentes) || fuentes.length !== 0) {\n    errores.push('La respuesta No generado contiene datos inesperados');\n  }\n}\n\n// Verificar que las fuentes declaradas estén entre las autorizadas\nconst conocimientos = $('A-12 | Conocimiento | Filtrar por categoría')\n  .first().json.conocimientos;\n\nconst fuentesAutorizadas = conocimientos.map(k =>\n  k.tema.match(/^K\\d+/)?.[0]\n).filter(Boolean);\n\nif (Array.isArray(fuentes)) {\n  for (const fuente of fuentes) {\n    if (!fuentesAutorizadas.includes(fuente)) {\n      errores.push(`Fuente no autorizada: ${fuente}`);\n    }\n  }\n}\n\nreturn {\n  json: {\n    ...respuesta,\n    borrador_validado: {\n      es_valido: errores.length === 0,\n      resultado: resultado ?? null,\n      asunto: asunto ?? '',\n      cuerpo: cuerpo ?? '',\n      fuentes: Array.isArray(fuentes) ? fuentes : [],\n      errores\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3040,
+        -448
+      ],
+      "id": "4e13aecc-d25a-4c62-a773-990239caa959",
+      "name": "A-14 | Validación | Verificar borrador IA"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "69dfcb93-9407-4987-9ab0-825d083c3746",
+              "name": "id_notion",
+              "value": "={{ $('A-04 | Validación | Verificar datos').item.json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "87499ece-b32a-43ec-a8ae-a92e5e4a86df",
+              "name": "asunto_ia",
+              "value": "={{ $json.borrador_validado.asunto }}",
+              "type": "string"
+            },
+            {
+              "id": "9500e815-f626-44c0-b236-af7f5f408224",
+              "name": "borrador_ia",
+              "value": "={{ $json.borrador_validado.cuerpo }}",
+              "type": "string"
+            },
+            {
+              "id": "fe2a7b4c-f0e4-4a79-a6a0-bf4f885e63d9",
+              "name": "fuentes_utilizadas",
+              "value": "={{ $json.borrador_validado.fuentes.join(', ') }}",
+              "type": "string"
+            },
+            {
+              "id": "e159a1f8-2f59-4b13-aa1c-e5a06a9eacf6",
+              "name": "resultado_generacion",
+              "value": "={{ $json.borrador_validado.resultado }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        3232,
+        -448
+      ],
+      "id": "862eeea2-0b75-4a4e-a121-dfaf3df4c088",
+      "name": "A-15 | Datos | Preparar borrador"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "da6378d0-f9c8-463a-b075-fb73dfc50973",
+              "leftValue": "={{ $json.resultado_generacion }}",
+              "rightValue": "Generado",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "a9c2f353-6439-4bf6-a2c0-6dc2f0597e03",
+              "leftValue": "={{ $('A-14 | Validación | Verificar borrador IA').item.json.borrador_validado.es_valido }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3424,
+        -448
+      ],
+      "id": "6cf20b02-57a0-40fc-88cb-f4726023140f",
+      "name": "A-16 | Control | ¿Borrador generado?"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0C322TUW03",
+          "mode": "list",
+          "cachedResultName": "todo-desarrolloeducativo"
+        },
+        "text": "={{\n\"📝 NUEVO BORRADOR PENDIENTE DE REVISIÓN\\n\\n\" +\n\"Asunto: \" + $('A-15 | Datos | Preparar borrador').item.json.asunto_ia +\n\"\\n\\nEstado: En revisión\" +\n\"\\nFuentes utilizadas: \" + $('A-15 | Datos | Preparar borrador').item.json.fuentes_utilizadas +\n\"\\n\\nRevisar contenido en Notion:\\n\" +\n\"https://www.notion.so/\" +\n$('A-15 | Datos | Preparar borrador').item.json.id_notion.replace(/-/g, \"\") +\n\"\\n\\nLa aprobación debe realizarse en Notion.\"\n}}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        3968,
+        -480
+      ],
+      "id": "734163c5-6ba1-48fe-9acd-aed11ef6754e",
+      "name": "A-18 | Slack | Notificar revisión pendiente1",
+      "webhookId": "9def6df9-4eaf-4528-b30c-1f39ff6576ef",
+      "retryOnFail": true,
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "nNpmKaeFIAEot1iz",
+          "name": "Slack account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $json.id_notion }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Asunto IA|rich_text",
+              "textContent": "={{ $json.asunto_ia }}"
+            },
+            {
+              "key": "Borrador IA|rich_text",
+              "textContent": "={{ $json.borrador_ia }}"
+            },
+            {
+              "key": "Fuentes Utilizadas|rich_text",
+              "textContent": "={{ $json.fuentes_utilizadas }}"
+            },
+            {
+              "key": "Estado|select",
+              "selectValue": "En revisión"
+            },
+            {
+              "key": "Ultima ejecucion|date",
+              "date": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        3664,
+        -464
+      ],
+      "id": "9132c7ec-6d8b-445d-8972-27fb41331ea1",
+      "name": "A-17 NUEVO | Notion | Guardar borrador para revisión 3.",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "credentials": {
+        "notionApi": {
+          "id": "6FcS4XRClCLKEISz",
+          "name": "Notion account 3"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Generando"
+            },
+            {
+              "key": "Ultima ejecucion|date",
+              "date": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1328,
+        -336
+      ],
+      "id": "794ce431-2039-4c09-ba93-053402040d95",
+      "name": "A-05B | Notion | Marcar como En proceso",
+      "credentials": {
+        "notionApi": {
+          "id": "6FcS4XRClCLKEISz",
+          "name": "Notion account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.notion.com/v1/pages/{{ $('A-04 | Validación | Verificar datos').first().json.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "notionApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"Estado\": {\n      \"select\": {\n        \"name\": \"Error\"\n      }\n    },\n    \"Error\": {\n      \"rich_text\": [\n        {\n          \"text\": {\n            \"content\": \"{{ $json.error?.message || $json.error?.description || $json.error || 'Error desconocido' }}\"\n          }\n        }\n      ]\n    },\n    \"Ultima ejecucion\": {\n      \"date\": {\n        \"start\": \"{{ $now.toISO() }}\"\n      }\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        4304,
+        288
+      ],
+      "id": "33585df4-9663-46cb-9a6a-bd55450f1271",
+      "name": "A-ERR | HTTP | Registrar fallo técnico",
+      "credentials": {
+        "notionApi": {
+          "id": "6FcS4XRClCLKEISz",
+          "name": "Notion account 3"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "A-01 | Inicio | Disparador manual": {
+      "main": [
+        [
+          {
+            "node": "A-02 | Notion | Buscar contenidos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-02 | Notion | Buscar contenidos": {
+      "main": [
+        [
+          {
+            "node": "A-04 | Validación | Verificar datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-04 | Validación | Verificar datos": {
+      "main": [
+        [
+          {
+            "node": "A-05 | Control | ¿Datos válidos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-05 | Control | ¿Datos válidos?": {
+      "main": [
+        [
+          {
+            "node": "A-05B | Notion | Marcar como En proceso",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "A-06 | Notion | Registrar validación fallida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-07 | OpenAI | Clasificar contenido": {
+      "main": [
+        [
+          {
+            "node": "A-08 | Validación | Verificar clasificación IA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "A-ERR | HTTP | Registrar fallo técnico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-08 | Validación | Verificar clasificación IA": {
+      "main": [
+        [
+          {
+            "node": "A-09 | Datos | Preparar clasificación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-09 | Datos | Preparar clasificación": {
+      "main": [
+        [
+          {
+            "node": "A-10 | Notion | Guardar clasificación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-10 | Notion | Guardar clasificación": {
+      "main": [
+        [
+          {
+            "node": "A-11 | Notion | Buscar conocimientos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "A-ERR | HTTP | Registrar fallo técnico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-11 | Notion | Buscar conocimientos": {
+      "main": [
+        [
+          {
+            "node": "A-12 | Conocimiento | Filtrar por categoría",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-12 | Conocimiento | Filtrar por categoría": {
+      "main": [
+        [
+          {
+            "node": "A-13 | OpenAI | Generar borrador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-13 | OpenAI | Generar borrador": {
+      "main": [
+        [
+          {
+            "node": "A-14 | Validación | Verificar borrador IA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "A-ERR | HTTP | Registrar fallo técnico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-14 | Validación | Verificar borrador IA": {
+      "main": [
+        [
+          {
+            "node": "A-15 | Datos | Preparar borrador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-15 | Datos | Preparar borrador": {
+      "main": [
+        [
+          {
+            "node": "A-16 | Control | ¿Borrador generado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-16 | Control | ¿Borrador generado?": {
+      "main": [
+        [
+          {
+            "node": "A-17 NUEVO | Notion | Guardar borrador para revisión 3.",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "A-17 NUEVO | Notion | Guardar borrador para revisión 3.": {
+      "main": [
+        [
+          {
+            "node": "A-18 | Slack | Notificar revisión pendiente1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "A-ERR | HTTP | Registrar fallo técnico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-05B | Notion | Marcar como En proceso": {
+      "main": [
+        [
+          {
+            "node": "A-07 | OpenAI | Clasificar contenido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-18 | Slack | Notificar revisión pendiente1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "A-ERR | HTTP | Registrar fallo técnico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d2819a27-87c1-4e37-ad21-8ee440d3df4d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "63f82e453fd280d4c626fe13b3b93ad983da7db9bb61c6d899c14737f5b273f8"
+  },
+  "nodeGroups": [],
+  "id": "ehfQ5l6NPoQRTcb9",
+  "tags": []
+}
