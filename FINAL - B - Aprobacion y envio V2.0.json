@@ -6,8 +6,8 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        96,
-        0
+        16,
+        64
       ],
       "id": "f77625a6-89ea-479e-be97-c643f427b52c",
       "name": "B-01 | Inicio | Disparador manual"
@@ -18,10 +18,8 @@
         "operation": "getAll",
         "dataSourceId": {
           "__rl": true,
-          "value": "8549ef1f-77e7-8369-90a3-079126437d0a",
-          "mode": "list",
-          "cachedResultName": "FINAL - Contenidos",
-          "cachedResultUrl": "https://app.notion.com/p/eb69ef1f77e78261b64a01a536bfe20d"
+          "value": "CONFIGURAR_DATASOURCE_CONTENIDOS",
+          "mode": "id"
         },
         "limit": 1,
         "filterType": "manual",
@@ -40,17 +38,11 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 3,
       "position": [
-        256,
-        192
+        208,
+        144
       ],
       "id": "5b8ba197-6be8-4b6d-b1f6-6ff43ddde8fa",
-      "name": "B-02 | Notion | Buscar contenidos aprobados",
-      "credentials": {
-        "notionApi": {
-          "id": "6FcS4XRClCLKEISz",
-          "name": "Notion account 3"
-        }
-      }
+      "name": "B-02 | Notion | Buscar contenidos aprobados"
     },
     {
       "parameters": {
@@ -60,8 +52,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        448,
-        240
+        400,
+        208
       ],
       "id": "ba83ba5d-ce7e-43f3-a137-e39bb721ba67",
       "name": "B-03 | Validación | Verificar aprobación"
@@ -94,8 +86,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        608,
-        400
+        576,
+        368
       ],
       "id": "8897f01c-0a0d-4582-9716-6b7af7424cc4",
       "name": "B-04 | Control | ¿Aprobación válida?"
@@ -113,7 +105,7 @@
             {
               "id": "0ee12fd2-5e44-4fc4-b319-dd6fe6dca7ed",
               "leftValue": "={{ $json.property_email_destinatario }}",
-              "rightValue": "elandle@hotmail.com",
+              "rightValue": "destinatario@example.com",
               "operator": {
                 "type": "string",
                 "operation": "equals",
@@ -128,8 +120,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        768,
-        256
+        720,
+        240
       ],
       "id": "a1f4c6a2-d206-4779-bb61-30592964fc58",
       "name": "B-05 | Seguridad | ¿Destinatario autorizado?"
@@ -162,8 +154,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        944,
-        16
+        864,
+        80
       ],
       "id": "8d0b185e-ba11-4d03-9c0b-19f96a0f58e0",
       "name": "B-06 | Control | ¿Sin envío previo?"
@@ -182,31 +174,24 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 3,
       "position": [
-        1072,
-        -208
+        1040,
+        -48
       ],
       "id": "eba088ca-d37f-4113-a625-8298ba77e462",
       "name": "B-07 | Notion | Reconsultar contenido",
       "retryOnFail": false,
-      "waitBetweenTries": 3000,
-      "credentials": {
-        "notionApi": {
-          "id": "6FcS4XRClCLKEISz",
-          "name": "Notion account 3"
-        }
-      },
       "onError": "continueErrorOutput"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const item = $input.item.json;\n\nconst texto = (valor) =>\n  typeof valor === 'string' ? valor.trim() : '';\n\nconst errores = [];\n\nif (item.property_estado !== 'Aprobado') {\n  errores.push('El contenido ya no está aprobado');\n}\n\nif (!texto(item.property_asunto_aprobado)) {\n  errores.push('Falta el asunto aprobado');\n}\n\nif (!texto(item.property_contenido_aprobado)) {\n  errores.push('Falta el contenido aprobado');\n}\n\nif (!item.property_fecha_aprobacion?.start) {\n  errores.push('Falta la fecha de aprobación');\n}\n\nconst aprobadores = item.property_aprobado_por;\n\nif (\n  Array.isArray(aprobadores)\n    ? aprobadores.length === 0\n    : !aprobadores\n) {\n  errores.push('Falta el responsable de aprobación');\n}\n\nif (Number(item.property_version) !== 1) {\n  errores.push('La versión no coincide con la versión validada');\n}\n\nif (texto(item.property_id_envio)) {\n  errores.push('El contenido ya registra un envío');\n}\n\nif (\n  texto(item.property_email_destinatario).toLowerCase() !==\n  'elandle@hotmail.com'\n) {\n  errores.push('El destinatario no está autorizado');\n}\n\nreturn {\n  json: {\n    ...item,\n    validacion_final: {\n      es_valida: errores.length === 0,\n      errores\n    }\n  }\n};"
+        "jsCode": "const item = $input.item.json;\n\nconst texto = (valor) =>\n  typeof valor === 'string' ? valor.trim() : '';\n\nconst errores = [];\n\nif (item.property_estado !== 'Aprobado') {\n  errores.push('El contenido ya no está aprobado');\n}\n\nif (!texto(item.property_asunto_aprobado)) {\n  errores.push('Falta el asunto aprobado');\n}\n\nif (!texto(item.property_contenido_aprobado)) {\n  errores.push('Falta el contenido aprobado');\n}\n\nif (!item.property_fecha_aprobacion?.start) {\n  errores.push('Falta la fecha de aprobación');\n}\n\nconst aprobadores = item.property_aprobado_por;\n\nif (\n  Array.isArray(aprobadores)\n    ? aprobadores.length === 0\n    : !aprobadores\n) {\n  errores.push('Falta el responsable de aprobación');\n}\n\nconst versionValidada = $(\n  'B-03 | Validación | Verificar aprobación'\n).first().json.validacion_aprobacion.version_validada;\n\nif (Number(item.property_version) !== versionValidada) {\n  errores.push('La versión no coincide con la versión validada');\n}\n\nif (texto(item.property_id_envio)) {\n  errores.push('El contenido ya registra un envío');\n}\n\nif (\n  texto(item.property_email_destinatario).toLowerCase() !==\n  'destinatario@example.com'\n) {\n  errores.push('El destinatario no está autorizado');\n}\n\nreturn {\n  json: {\n    ...item,\n    validacion_final: {\n      es_valida: errores.length === 0,\n      errores\n    }\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1280,
-        -80
+        1248,
+        -176
       ],
       "id": "a039ac17-2611-4170-8645-afe0a073f062",
       "name": "B-08 | Validación | Verificar estado actualizado"
@@ -239,8 +224,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1424,
-        112
+        1408,
+        -16
       ],
       "id": "3331b46c-4d10-4a40-a0e6-6260081579e7",
       "name": "B-09 | Control | ¿Validación final correcta?"
@@ -278,12 +263,6 @@
       "name": "B-11 | Notion | Registrar inicio de envío",
       "retryOnFail": true,
       "waitBetweenTries": 3000,
-      "credentials": {
-        "notionApi": {
-          "id": "6FcS4XRClCLKEISz",
-          "name": "Notion account 3"
-        }
-      },
       "onError": "continueErrorOutput"
     },
     {
@@ -302,8 +281,8 @@
     },
     {
       "parameters": {
-        "sendTo": "elandle@hotmail.com",
-        "subject": "={{ 'Contenido aprobado | ' + $('B-12A | Notion | Recuperar contenido aprobado 4').first().json.property_idea_tema }}",
+        "sendTo": "destinatario@example.com",
+        "subject": "={{ $('B-12A | Notion | Recuperar contenido aprobado 4').first().json.property_asunto_aprobado }}",
         "emailType": "text",
         "message": "={{ $('B-12A | Notion | Recuperar contenido aprobado 4').first().json.property_contenido_aprobado }}",
         "options": {}
@@ -317,14 +296,7 @@
       "id": "7446b28f-cd71-4c83-a090-817bdc2757ac",
       "name": "B-13 | Gmail | Enviar contenido aprobado",
       "webhookId": "bd839b97-e42b-464f-918d-563a39ead1f0",
-      "retryOnFail": true,
-      "waitBetweenTries": 3000,
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "oXFzfvotpcsenXJQ",
-          "name": "Gmail account"
-        }
-      },
+      "retryOnFail": false,
       "onError": "continueErrorOutput"
     },
     {
@@ -350,7 +322,7 @@
             {
               "id": "9836bed1-4a7c-46c1-94e9-42d9c709b276",
               "leftValue": "={{ ($json.property_email_destinatario || '').trim().toLowerCase() }}",
-              "rightValue": "elandle@hotmail.com",
+              "rightValue": "destinatario@example.com",
               "operator": {
                 "type": "string",
                 "operation": "equals",
@@ -375,8 +347,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2416,
-        -144
+        2384,
+        -128
       ],
       "id": "97d818de-21eb-423f-a535-6b1a26fe4ff3",
       "name": "B-12B | IF | Validar contenido para envío 3."
@@ -395,17 +367,11 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 3,
       "position": [
-        2640,
-        -160
+        2656,
+        -208
       ],
       "id": "f405bc65-a237-42b3-8e3f-09f36620346a",
-      "name": "B-12C | Notion | Verificar intento de envío",
-      "credentials": {
-        "notionApi": {
-          "id": "6FcS4XRClCLKEISz",
-          "name": "Notion account 3"
-        }
-      }
+      "name": "B-12C | Notion | Verificar intento de envío"
     },
     {
       "parameters": {
@@ -446,18 +412,12 @@
       "typeVersion": 3,
       "position": [
         3536,
-        -208
+        -304
       ],
       "id": "df29cb53-83d5-47f8-9a20-7962db837f33",
       "name": "B-14 | Notion | Registrar resultado del envío",
       "retryOnFail": true,
       "waitBetweenTries": 3000,
-      "credentials": {
-        "notionApi": {
-          "id": "6FcS4XRClCLKEISz",
-          "name": "Notion account 3"
-        }
-      },
       "onError": "continueErrorOutput"
     },
     {
@@ -465,10 +425,8 @@
         "resource": "databasePage",
         "dataSourceId": {
           "__rl": true,
-          "value": "3f79ef1f-77e7-80d9-98c7-000bccf003b6",
-          "mode": "list",
-          "cachedResultName": "FINAL - Ejecuciones",
-          "cachedResultUrl": "https://app.notion.com/p/3f79ef1f77e7802f971cde361540c4e2"
+          "value": "CONFIGURAR_DATASOURCE_EJECUCIONES",
+          "mode": "id"
         },
         "title": "={{ 'Envío | ' + $json.property_id_envio }}",
         "propertiesUi": {
@@ -518,13 +476,7 @@
         -224
       ],
       "id": "1d2d53ae-b5fd-4ba1-a04e-3eb21286773d",
-      "name": "B-12 NUEVO | Notion | Registrar intento de envío 3",
-      "credentials": {
-        "notionApi": {
-          "id": "6FcS4XRClCLKEISz",
-          "name": "Notion account 3"
-        }
-      }
+      "name": "B-12 NUEVO | Notion | Registrar intento de envío 3"
     },
     {
       "parameters": {
@@ -544,13 +496,7 @@
         -192
       ],
       "id": "097bcafa-24fb-4928-a35f-985051dea156",
-      "name": "B-12A | Notion | Recuperar contenido aprobado 4",
-      "credentials": {
-        "notionApi": {
-          "id": "6FcS4XRClCLKEISz",
-          "name": "Notion account 3"
-        }
-      }
+      "name": "B-12A | Notion | Recuperar contenido aprobado 4"
     },
     {
       "parameters": {
@@ -599,7 +545,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2832,
+        2816,
         -176
       ],
       "id": "654f7911-d3b3-4843-bee2-5e54a44fb4cc",
@@ -619,8 +565,7 @@
             {
               "key": "Estado|select",
               "selectValue": "Publicado"
-            },
-            {}
+            }
           ]
         },
         "options": {}
@@ -635,12 +580,6 @@
       "name": "B-15 | Notion | Marcar contenido publicado",
       "retryOnFail": true,
       "waitBetweenTries": 3000,
-      "credentials": {
-        "notionApi": {
-          "id": "6FcS4XRClCLKEISz",
-          "name": "Notion account 3"
-        }
-      },
       "onError": "continueErrorOutput"
     },
     {
@@ -649,7 +588,7 @@
         "operation": "update",
         "pageId": {
           "__rl": true,
-          "value": "={{ $('B-12A | Notion | Recuperar contenido aprobado 4').first().json.id }}",
+          "value": "={{ $('B-07 | Notion | Reconsultar contenido').first().json.id }}",
           "mode": "id"
         },
         "propertiesUi": {
@@ -660,7 +599,7 @@
             },
             {
               "key": "Error|rich_text",
-              "textContent": "={{ $json.error?.message || $json.error || 'Error desconocido' }}"
+              "textContent": "={{ 'Envío pendiente de conciliación. No reenviar ni volver a Aprobado hasta revisar Gmail y esta ejecución. Detalle: ' + ($json.error?.message || $json.error?.description || JSON.stringify($json.error ?? $json)) }}"
             },
             {
               "key": "Ultima ejecucion|date",
@@ -674,16 +613,10 @@
       "typeVersion": 3,
       "position": [
         3680,
-        368
+        336
       ],
       "id": "26f0cec9-598e-4bd1-b8fd-2ae6a23ab442",
-      "name": "B-ERR | Notion | Registrar fallo de envío",
-      "credentials": {
-        "notionApi": {
-          "id": "6FcS4XRClCLKEISz",
-          "name": "Notion account 3"
-        }
-      }
+      "name": "B-ERR | Notion | Registrar fallo de envío"
     },
     {
       "parameters": {
@@ -702,7 +635,7 @@
             },
             {
               "key": "Error|rich_text",
-              "textContent": "={{ $json.validacion_aprobacion.errores.join('; ') }}"
+              "textContent": "={{ $json.validacion_final?.errores?.length\n  ? $json.validacion_final.errores.join('; ')\n  : $json.validacion_aprobacion?.errores?.length\n    ? $json.validacion_aprobacion.errores.join('; ')\n    : 'Envío bloqueado: destinatario no autorizado o identificador de envío previo presente. Revisar antes de reintentar.' }}"
             },
             {
               "key": "Ultima ejecucion|date",
@@ -715,17 +648,162 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 3,
       "position": [
-        1648,
-        480
+        1664,
+        640
       ],
       "id": "33523d07-7c5f-4be7-b75e-36e92e0b74ff",
-      "name": "B-ERR-EARLY | Notion | Registrar validación fallida",
-      "credentials": {
-        "notionApi": {
-          "id": "6FcS4XRClCLKEISz",
-          "name": "Notion account 3"
-        }
-      }
+      "name": "B-ERR-EARLY | Notion | Registrar validación fallida"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1ac6dfe4-1e9c-4a9f-983d-ee7a72292f91",
+              "name": "id_contenido",
+              "value": "={{ $('B-12A | Notion | Recuperar contenido aprobado 4').first().json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "9f7f0d64-71f0-4c8e-824e-c0cb4d06e4f4",
+              "name": "message_id",
+              "value": "={{ $('B-13 | Gmail | Enviar contenido aprobado').first().json.id || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "2f65fe01-9321-4157-a08a-2f561f81ebb5",
+              "name": "detalle",
+              "value": "={{ 'Gmail confirmó el envío, pero falló el registro en Notion. Revisar antes de cualquier reenvío. Detalle: ' + ($json.error?.message || $json.error?.description || JSON.stringify($json.error ?? $json)) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        3728,
+        80
+      ],
+      "id": "9abb0952-e277-41c7-830a-a9d984c79544",
+      "name": "B-ERR-POST | Preparar fallo de registro"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('B-12 NUEVO | Notion | Registrar intento de envío 3').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado ejecución|select",
+              "selectValue": "Finalizada"
+            },
+            {
+              "key": "Resultado negocio|select",
+              "selectValue": "Publicado"
+            },
+            {
+              "key": "Etapa|select",
+              "selectValue": "Cierre"
+            },
+            {
+              "key": "Fecha fin|date",
+              "date": "={{ $now.toISO() }}"
+            },
+            {
+              "key": "Detalle|rich_text",
+              "textContent": "={{ $json.detalle + ' | Message ID: ' + ($json.message_id || 'No disponible') + ' | Contenido: ' + $json.id_contenido + ' | Cierre administrativo pendiente de revisión manual.' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        3984,
+        80
+      ],
+      "id": "2858c1b7-f77c-4e23-8da8-5127efee68d5",
+      "name": "B-ERR-POST | Registrar envío con cierre pendiente"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('B-12A | Notion | Recuperar contenido aprobado 4').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Error"
+            },
+            {
+              "key": "Error|rich_text",
+              "textContent": "Envío bloqueado en B-12B: el contenido aprobado está vacío, el destinatario no está autorizado o el estado ya no es Enviando. Gmail no fue ejecutado en esta ruta."
+            },
+            {
+              "key": "Ultima ejecucion|date",
+              "date": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2768,
+        0
+      ],
+      "id": "0936a3ce-6220-4aff-a08b-fd1a5b3f1ae8",
+      "name": "B-12B-ERR | Notion | Registrar bloqueo previo al envío"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('B-02 | Notion | Buscar contenidos aprobados').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Error"
+            },
+            {
+              "key": "Error|rich_text",
+              "textContent": "={{ 'Falló la reconsulta en B-07. Gmail no fue ejecutado en esta ruta. Detalle: ' + ($json.error?.message || $json.error?.description || JSON.stringify($json.error ?? $json)) }}"
+            },
+            {
+              "key": "Ultima ejecucion|date",
+              "date": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1296,
+        144
+      ],
+      "id": "b0a9259c-69a5-4cd5-ac5b-0bdf0ad6e0fe",
+      "name": "B-07-ERR | Notion | Registrar fallo de reconsulta"
     }
   ],
   "pinData": {},
@@ -825,6 +903,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "B-07-ERR | Notion | Registrar fallo de reconsulta",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -905,6 +990,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "B-12B-ERR | Notion | Registrar bloqueo previo al envío",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -977,7 +1069,7 @@
         ],
         [
           {
-            "node": "B-ERR | Notion | Registrar fallo de envío",
+            "node": "B-ERR-POST | Preparar fallo de registro",
             "type": "main",
             "index": 0
           }
@@ -989,7 +1081,18 @@
         [],
         [
           {
-            "node": "B-ERR | Notion | Registrar fallo de envío",
+            "node": "B-ERR-POST | Preparar fallo de registro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "B-ERR-POST | Preparar fallo de registro": {
+      "main": [
+        [
+          {
+            "node": "B-ERR-POST | Registrar envío con cierre pendiente",
             "type": "main",
             "index": 0
           }
@@ -1002,12 +1105,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "d5d05fc2-b085-483b-a868-c8cd4c7a9b51",
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "63f82e453fd280d4c626fe13b3b93ad983da7db9bb61c6d899c14737f5b273f8"
-  },
   "nodeGroups": [],
-  "id": "Iymm7ba7cPpGN5Bv",
   "tags": []
 }
+
