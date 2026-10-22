@@ -6,8 +6,8 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        16,
-        64
+        -208,
+        288
       ],
       "id": "f77625a6-89ea-479e-be97-c643f427b52c",
       "name": "B-01 | Inicio | Disparador manual"
@@ -30,6 +30,11 @@
               "key": "Estado|select",
               "condition": "equals",
               "optionValue": "Aprobado"
+            },
+            {
+              "key": "Lote de pruebas|rich_text",
+              "condition": "equals",
+              "richTextValue": "VALIDACION-FINAL-01"
             }
           ]
         },
@@ -104,8 +109,8 @@
           "conditions": [
             {
               "id": "0ee12fd2-5e44-4fc4-b319-dd6fe6dca7ed",
-              "leftValue": "={{ $json.property_email_destinatario }}",
-              "rightValue": "destinatario@example.com",
+              "leftValue": "={{ ($json.property_email_destinatario || '').trim().toLowerCase() }}",
+              "rightValue": "={{ $('B-00 | Config | Parametros de envio').first().json.email_autorizado.trim().toLowerCase() }}",
               "operator": {
                 "type": "string",
                 "operation": "equals",
@@ -180,12 +185,13 @@
       "id": "eba088ca-d37f-4113-a625-8298ba77e462",
       "name": "B-07 | Notion | Reconsultar contenido",
       "retryOnFail": false,
+      "waitBetweenTries": 3000,
       "onError": "continueErrorOutput"
     },
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const item = $input.item.json;\n\nconst texto = (valor) =>\n  typeof valor === 'string' ? valor.trim() : '';\n\nconst errores = [];\n\nif (item.property_estado !== 'Aprobado') {\n  errores.push('El contenido ya no está aprobado');\n}\n\nif (!texto(item.property_asunto_aprobado)) {\n  errores.push('Falta el asunto aprobado');\n}\n\nif (!texto(item.property_contenido_aprobado)) {\n  errores.push('Falta el contenido aprobado');\n}\n\nif (!item.property_fecha_aprobacion?.start) {\n  errores.push('Falta la fecha de aprobación');\n}\n\nconst aprobadores = item.property_aprobado_por;\n\nif (\n  Array.isArray(aprobadores)\n    ? aprobadores.length === 0\n    : !aprobadores\n) {\n  errores.push('Falta el responsable de aprobación');\n}\n\nconst versionValidada = $(\n  'B-03 | Validación | Verificar aprobación'\n).first().json.validacion_aprobacion.version_validada;\n\nif (Number(item.property_version) !== versionValidada) {\n  errores.push('La versión no coincide con la versión validada');\n}\n\nif (texto(item.property_id_envio)) {\n  errores.push('El contenido ya registra un envío');\n}\n\nif (\n  texto(item.property_email_destinatario).toLowerCase() !==\n  'destinatario@example.com'\n) {\n  errores.push('El destinatario no está autorizado');\n}\n\nreturn {\n  json: {\n    ...item,\n    validacion_final: {\n      es_valida: errores.length === 0,\n      errores\n    }\n  }\n};"
+        "jsCode": "const item = $input.item.json;\n\nconst texto = (valor) =>\n  typeof valor === 'string' ? valor.trim() : '';\n\nconst errores = [];\n\nif (item.property_estado !== 'Aprobado') {\n  errores.push('El contenido ya no está aprobado');\n}\n\nif (!texto(item.property_asunto_aprobado)) {\n  errores.push('Falta el asunto aprobado');\n}\n\nif (!texto(item.property_contenido_aprobado)) {\n  errores.push('Falta el contenido aprobado');\n}\n\nif (!item.property_fecha_aprobacion?.start) {\n  errores.push('Falta la fecha de aprobación');\n}\n\nconst aprobadores = item.property_aprobado_por;\n\nif (\n  Array.isArray(aprobadores)\n    ? aprobadores.length === 0\n    : !aprobadores\n) {\n  errores.push('Falta el responsable de aprobación');\n}\n\nconst versionValidada = $(\n  'B-03 | Validación | Verificar aprobación'\n).first().json.validacion_aprobacion.version_validada;\n\nif (Number(item.property_version) !== versionValidada) {\n  errores.push('La versión no coincide con la versión validada');\n}\n\nif (texto(item.property_id_envio)) {\n  errores.push('El contenido ya registra un envío');\n}\n\nconst emailAutorizado = String(\n  $('B-00 | Config | Parametros de envio')\n    .first().json.email_autorizado ?? ''\n).trim().toLowerCase();\n\nif (\n  !emailAutorizado ||\n  texto(item.property_email_destinatario).toLowerCase() !== emailAutorizado\n) {\n  errores.push('El destinatario no está autorizado o falta configurar el correo autorizado');\n}\n\nreturn {\n  json: {\n    ...item,\n    validacion_final: {\n      es_valida: errores.length === 0,\n      errores\n    }\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -281,7 +287,7 @@
     },
     {
       "parameters": {
-        "sendTo": "destinatario@example.com",
+        "sendTo": "={{ $('B-12A | Notion | Recuperar contenido aprobado 4').first().json.property_email_destinatario.trim().toLowerCase() }}",
         "subject": "={{ $('B-12A | Notion | Recuperar contenido aprobado 4').first().json.property_asunto_aprobado }}",
         "emailType": "text",
         "message": "={{ $('B-12A | Notion | Recuperar contenido aprobado 4').first().json.property_contenido_aprobado }}",
@@ -295,8 +301,8 @@
       ],
       "id": "7446b28f-cd71-4c83-a090-817bdc2757ac",
       "name": "B-13 | Gmail | Enviar contenido aprobado",
-      "webhookId": "bd839b97-e42b-464f-918d-563a39ead1f0",
       "retryOnFail": false,
+      "waitBetweenTries": 3000,
       "onError": "continueErrorOutput"
     },
     {
@@ -322,7 +328,7 @@
             {
               "id": "9836bed1-4a7c-46c1-94e9-42d9c709b276",
               "leftValue": "={{ ($json.property_email_destinatario || '').trim().toLowerCase() }}",
-              "rightValue": "destinatario@example.com",
+              "rightValue": "={{ $('B-00 | Config | Parametros de envio').first().json.email_autorizado.trim().toLowerCase() }}",
               "operator": {
                 "type": "string",
                 "operation": "equals",
@@ -338,6 +344,16 @@
                 "operation": "equals",
                 "name": "filter.operator.equals"
               }
+            },
+            {
+              "id": "224f58d2-a8fe-40b8-8e24-f58538e4db0b",
+              "leftValue": "={{ ($json.property_asunto_aprobado || '').trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
             }
           ],
           "combinator": "and"
@@ -347,8 +363,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2384,
-        -128
+        2368,
+        -192
       ],
       "id": "97d818de-21eb-423f-a535-6b1a26fe4ff3",
       "name": "B-12B | IF | Validar contenido para envío 3."
@@ -367,11 +383,13 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 3,
       "position": [
-        2656,
-        -208
+        2576,
+        -240
       ],
       "id": "f405bc65-a237-42b3-8e3f-09f36620346a",
-      "name": "B-12C | Notion | Verificar intento de envío"
+      "name": "B-12C | Notion | Verificar intento de envío",
+      "retryOnFail": true,
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -476,7 +494,9 @@
         -224
       ],
       "id": "1d2d53ae-b5fd-4ba1-a04e-3eb21286773d",
-      "name": "B-12 NUEVO | Notion | Registrar intento de envío 3"
+      "name": "B-12 NUEVO | Notion | Registrar intento de envío 3",
+      "retryOnFail": false,
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -492,11 +512,13 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 3,
       "position": [
-        2160,
-        -192
+        2176,
+        -224
       ],
       "id": "097bcafa-24fb-4928-a35f-985051dea156",
-      "name": "B-12A | Notion | Recuperar contenido aprobado 4"
+      "name": "B-12A | Notion | Recuperar contenido aprobado 4",
+      "retryOnFail": false,
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -546,7 +568,7 @@
       "typeVersion": 2.3,
       "position": [
         2816,
-        -176
+        -272
       ],
       "id": "654f7911-d3b3-4843-bee2-5e54a44fb4cc",
       "name": "B-12D | IF | Autorizar envío único 3"
@@ -612,8 +634,8 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 3,
       "position": [
-        3680,
-        336
+        3696,
+        400
       ],
       "id": "26f0cec9-598e-4bd1-b8fd-2ae6a23ab442",
       "name": "B-ERR | Notion | Registrar fallo de envío"
@@ -750,7 +772,7 @@
             },
             {
               "key": "Error|rich_text",
-              "textContent": "Envío bloqueado en B-12B: el contenido aprobado está vacío, el destinatario no está autorizado o el estado ya no es Enviando. Gmail no fue ejecutado en esta ruta."
+              "textContent": "Envío bloqueado en B-12B: falta asunto o contenido aprobado, el destinatario no está autorizado o el estado ya no es Enviando. Gmail no fue ejecutado en esta ruta."
             },
             {
               "key": "Ultima ejecucion|date",
@@ -763,8 +785,8 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 3,
       "position": [
-        2768,
-        0
+        2544,
+        48
       ],
       "id": "0936a3ce-6220-4aff-a08b-fd1a5b3f1ae8",
       "name": "B-12B-ERR | Notion | Registrar bloqueo previo al envío"
@@ -804,6 +826,546 @@
       ],
       "id": "b0a9259c-69a5-4cd5-ac5b-0bdf0ad6e0fe",
       "name": "B-07-ERR | Notion | Registrar fallo de reconsulta"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a55124d1-e9d3-4561-98f6-4773d6e39b17",
+              "name": "email_autorizado",
+              "value": "destinatario@example.com",
+              "type": "string"
+            },
+            {
+              "id": "e1dbace1-f953-4ab1-8dbc-95cd8dab8f61",
+              "name": "slack_channel_id",
+              "value": "CONFIGURAR_CANAL_SLACK",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        0,
+        144
+      ],
+      "id": "25cbbe58-25d0-4a5f-93e3-a8f9ce9f774b",
+      "name": "B-00 | Config | Parametros de envio"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "={{ $('B-00 | Config | Parametros de envio').first().json.slack_channel_id.trim() }}",
+          "mode": "id"
+        },
+        "text": "✅ Gmail confirmó el envío del contenido aprobado. El resultado quedó registrado en Notion.",
+        "otherOptions": {
+          "thread_ts": {
+            "replyValues": {
+              "thread_ts": "={{ $('B-12A | Notion | Recuperar contenido aprobado 4').first().json.property_slack_thread_ts }}"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        4080,
+        -336
+      ],
+      "id": "0cd6f990-8f70-44a8-b089-324825836e7a",
+      "name": "B-16 | Slack | Notificar envío en hilo",
+      "retryOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ae0cdc3b-8d42-4006-a3a1-5ca9b0af4bb0",
+              "leftValue": "={{ String($('B-12A | Notion | Recuperar contenido aprobado 4').first().json.property_slack_thread_ts ?? '').trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3760,
+        -320
+      ],
+      "id": "ba1fd215-3854-41de-87c3-d42c60cea406",
+      "name": "B-15A | Control | ¿Tiene hilo Slack?"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('B-12 NUEVO | Notion | Registrar intento de envío 3').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Detalle|rich_text",
+              "textContent": "={{ (\n  'Gmail confirmó el envío y el resultado quedó registrado en Notion. ' +\n  'Falló únicamente la notificación en el hilo de Slack. ' +\n  'No reenviar el correo. ' +\n  'Message ID: ' +\n  ($('B-13 | Gmail | Enviar contenido aprobado').first().json.id || 'No disponible') +\n  ' | Error Slack: ' +\n  String(\n    $json.error?.message ||\n    $json.error?.description ||\n    (typeof $json.error === 'string'\n      ? $json.error\n      : JSON.stringify($json.error ?? $json))\n  )\n).slice(0, 2000) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        4416,
+        -320
+      ],
+      "id": "fb8d3b17-c02b-421d-a682-2c50c9ce927a",
+      "name": "B-16E | Notion | Registrar fallo de notificacion Slack"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('B-12 NUEVO | Notion | Registrar intento de envío 3').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado ejecución|select",
+              "selectValue": "Interrumpida"
+            },
+            {
+              "key": "Resultado negocio|select",
+              "selectValue": "No enviado"
+            },
+            {
+              "key": "Etapa|select",
+              "selectValue": "Cierre"
+            },
+            {
+              "key": "Fecha fin|date",
+              "date": "={{ $now.toISO() }}"
+            },
+            {
+              "key": "Detalle|rich_text",
+              "textContent": "Envío bloqueado por la validación B-12B. Gmail no fue ejecutado en esta ruta. Revisar el contenido relacionado antes de reintentar."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2800,
+        208
+      ],
+      "id": "a60cb8b4-6f17-498d-a5fb-3d5118bbbd3a",
+      "name": "B-12B-CIERRE | Notion | Cerrar intento bloqueado"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('B-12A | Notion | Recuperar contenido aprobado 4').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Error"
+            },
+            {
+              "key": "Ultima ejecucion|date",
+              "date": "={{ $now.toISO() }}"
+            },
+            {
+              "key": "Error|rich_text",
+              "textContent": "Envío bloqueado en B-12D: el registro del intento no cumple las condiciones de autorización. Gmail no fue ejecutado en esta ruta. Revisar el intento y su relación con el contenido."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        3040,
+        -64
+      ],
+      "id": "13ce956a-9303-4823-80c7-1e386521d2d2",
+      "name": "B-12D-ERR | Notion | Registrar intento no autorizado"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('B-12 NUEVO | Notion | Registrar intento de envío 3').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado ejecución|select",
+              "selectValue": "Interrumpida"
+            },
+            {
+              "key": "Resultado negocio|select",
+              "selectValue": "No enviado"
+            },
+            {
+              "key": "Etapa|select",
+              "selectValue": "Cierre"
+            },
+            {
+              "key": "Fecha fin|date",
+              "date": "={{ $now.toISO() }}"
+            },
+            {
+              "key": "Detalle|rich_text",
+              "textContent": "Envío bloqueado por el control B-12D. Gmail no fue ejecutado en esta ruta. Revisar el registro del intento y su relación con el contenido antes de reintentar."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        3248,
+        112
+      ],
+      "id": "1e3a6b2a-f90d-453d-948b-83dea6524de9",
+      "name": "B-12D-CIERRE | Notion | Cerrar intento no autorizado"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('B-07 | Notion | Reconsultar contenido').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Error"
+            },
+            {
+              "key": "Error|rich_text",
+              "textContent": "={{ ('Falló la actualización inicial de envío en B-11. Gmail no fue ejecutado en esta ruta. Revisar Estado e Id envio antes de reintentar, porque la actualización pudo haberse aplicado aunque no se recibiera confirmación. Detalle: ' + ($json.error?.message || $json.error?.description || JSON.stringify($json.error ?? $json))).slice(0, 2000) }}"
+            },
+            {
+              "key": "Ultima ejecucion|date",
+              "date": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2176,
+        416
+      ],
+      "id": "9c1f6fa2-3751-40e4-9c43-dacdd71ee967",
+      "name": "B-11-ERR | Notion | Registrar fallo al iniciar envío"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('B-12 NUEVO | Notion | Registrar intento de envío 3').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado ejecución|select",
+              "selectValue": "Interrumpida"
+            },
+            {
+              "key": "Etapa|select",
+              "selectValue": "Cierre"
+            },
+            {
+              "key": "Fecha fin|date",
+              "date": "={{ $now.toISO() }}"
+            },
+            {
+              "key": "Detalle|rich_text",
+              "textContent": "Gmail devolvió un error y el resultado del envío requiere conciliación. Revisar Gmail y la ejecución de n8n antes de cualquier reenvío. No devolver el contenido a Aprobado sin esa revisión."
+            },
+            {
+              "key": "Resultado negocio|select",
+              "selectValue": "Pendiente de conciliación"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        4032,
+        400
+      ],
+      "id": "a4391b02-d654-42cc-9ae5-55a4951e2b54",
+      "name": "B-ERR-CIERRE | Notion | Cerrar intento pendiente de conciliación"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('B-07 | Notion | Reconsultar contenido').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Error"
+            },
+            {
+              "key": "Error|rich_text",
+              "textContent": "={{ ('Falló la creación del registro del intento en B-12. Gmail no fue ejecutado en esta ruta. Revisar la base Ejecuciones antes de reintentar: el registro pudo haberse creado sin recibirse confirmación. Detalle: ' + ($json.error?.message || $json.error?.description || JSON.stringify($json.error ?? $json))).slice(0, 2000) }}"
+            },
+            {
+              "key": "Ultima ejecucion|date",
+              "date": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2160,
+        192
+      ],
+      "id": "e4009a47-2a57-48ce-b97a-084e703ee05a",
+      "name": "B-12-ERR | Notion | Registrar fallo al crear intento"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('B-07 | Notion | Reconsultar contenido').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Error"
+            },
+            {
+              "key": "Error|rich_text",
+              "textContent": "={{ ('Falló la recuperación del contenido en B-12A. Gmail no fue ejecutado en esta ruta. Detalle: ' + ($json.error?.message || $json.error?.description || JSON.stringify($json.error ?? $json))).slice(0, 2000) }}"
+            },
+            {
+              "key": "Ultima ejecucion|date",
+              "date": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2320,
+        16
+      ],
+      "id": "d14aa511-3a09-477e-a7bf-69b6762210b2",
+      "name": "B-12A-ERR | Notion | Registrar fallo al recuperar contenido"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('B-12 NUEVO | Notion | Registrar intento de envío 3').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado ejecución|select",
+              "selectValue": "Interrumpida"
+            },
+            {
+              "key": "Resultado negocio|select",
+              "selectValue": "No enviado"
+            },
+            {
+              "key": "Etapa|select",
+              "selectValue": "Cierre"
+            },
+            {
+              "key": "Fecha fin|date",
+              "date": "={{ $now.toISO() }}"
+            },
+            {
+              "key": "Detalle|rich_text",
+              "textContent": "Falló la recuperación del contenido en B-12A. Gmail no fue ejecutado en esta ruta. Revisar el contenido relacionado antes de reintentar."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2448,
+        256
+      ],
+      "id": "70ec0ee2-619d-4e02-b34d-cbd7a8ff871b",
+      "name": "B-12A-CIERRE | Notion | Cerrar intento por fallo de recuperación"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('B-07 | Notion | Reconsultar contenido').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Error"
+            },
+            {
+              "key": "Error|rich_text",
+              "textContent": "={{ ('Falló la verificación del intento en B-12C. Gmail no fue ejecutado en esta ruta. Detalle: ' + ($json.error?.message || $json.error?.description || JSON.stringify($json.error ?? $json))).slice(0, 2000) }}"
+            },
+            {
+              "key": "Ultima ejecucion|date",
+              "date": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2720,
+        -96
+      ],
+      "id": "2b26e7a0-3140-4fc3-bc45-fbbc854168e1",
+      "name": "B-12C-ERR | Notion | Registrar fallo al verificar intento"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('B-12 NUEVO | Notion | Registrar intento de envío 3').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado ejecución|select",
+              "selectValue": "Interrumpida"
+            },
+            {
+              "key": "Resultado negocio|select",
+              "selectValue": "No enviado"
+            },
+            {
+              "key": "Etapa|select",
+              "selectValue": "Cierre"
+            },
+            {
+              "key": "Fecha fin|date",
+              "date": "={{ $now.toISO() }}"
+            },
+            {
+              "key": "Detalle|rich_text",
+              "textContent": "Falló la verificación del intento en B-12C. Gmail no fue ejecutado en esta ruta. Revisar el intento y el contenido relacionado antes de reintentar."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        3040,
+        128
+      ],
+      "id": "324fbd8e-cca5-4181-ba7a-1f4a57d63af2",
+      "name": "B-12C-CIERRE | Notion | Cerrar intento por fallo de verificación"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -208,
+        48
+      ],
+      "id": "9184b196-2c83-4647-a495-6d82454a9064",
+      "name": "B-01 | Inicio | Disparador automatico"
     }
   ],
   "pinData": {},
@@ -812,7 +1374,7 @@
       "main": [
         [
           {
-            "node": "B-02 | Notion | Buscar contenidos aprobados",
+            "node": "B-00 | Config | Parametros de envio",
             "type": "main",
             "index": 0
           }
@@ -964,7 +1526,7 @@
         ],
         [
           {
-            "node": "B-ERR | Notion | Registrar fallo de envío",
+            "node": "B-11-ERR | Notion | Registrar fallo al iniciar envío",
             "type": "main",
             "index": 0
           }
@@ -976,6 +1538,13 @@
         [
           {
             "node": "B-12D | IF | Autorizar envío único 3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "B-12C-ERR | Notion | Registrar fallo al verificar intento",
             "type": "main",
             "index": 0
           }
@@ -1008,6 +1577,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "B-12-ERR | Notion | Registrar fallo al crear intento",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -1016,6 +1592,13 @@
         [
           {
             "node": "B-12B | IF | Validar contenido para envío 3.",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "B-12A-ERR | Notion | Registrar fallo al recuperar contenido",
             "type": "main",
             "index": 0
           }
@@ -1033,7 +1616,7 @@
         ],
         [
           {
-            "node": "B-ERR | Notion | Registrar fallo de envío",
+            "node": "B-12D-ERR | Notion | Registrar intento no autorizado",
             "type": "main",
             "index": 0
           }
@@ -1078,7 +1661,13 @@
     },
     "B-14 | Notion | Registrar resultado del envío": {
       "main": [
-        [],
+        [
+          {
+            "node": "B-15A | Control | ¿Tiene hilo Slack?",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "B-ERR-POST | Preparar fallo de registro",
@@ -1093,6 +1682,111 @@
         [
           {
             "node": "B-ERR-POST | Registrar envío con cierre pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "B-00 | Config | Parametros de envio": {
+      "main": [
+        [
+          {
+            "node": "B-02 | Notion | Buscar contenidos aprobados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "B-15A | Control | ¿Tiene hilo Slack?": {
+      "main": [
+        [
+          {
+            "node": "B-16 | Slack | Notificar envío en hilo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "B-16 | Slack | Notificar envío en hilo": {
+      "main": [
+        [],
+        [
+          {
+            "node": "B-16E | Notion | Registrar fallo de notificacion Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "B-12B-ERR | Notion | Registrar bloqueo previo al envío": {
+      "main": [
+        [
+          {
+            "node": "B-12B-CIERRE | Notion | Cerrar intento bloqueado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "B-12D-ERR | Notion | Registrar intento no autorizado": {
+      "main": [
+        [
+          {
+            "node": "B-12D-CIERRE | Notion | Cerrar intento no autorizado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "B-11-ERR | Notion | Registrar fallo al iniciar envío": {
+      "main": [
+        []
+      ]
+    },
+    "B-ERR | Notion | Registrar fallo de envío": {
+      "main": [
+        [
+          {
+            "node": "B-ERR-CIERRE | Notion | Cerrar intento pendiente de conciliación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "B-12A-ERR | Notion | Registrar fallo al recuperar contenido": {
+      "main": [
+        [
+          {
+            "node": "B-12A-CIERRE | Notion | Cerrar intento por fallo de recuperación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "B-12C-ERR | Notion | Registrar fallo al verificar intento": {
+      "main": [
+        [
+          {
+            "node": "B-12C-CIERRE | Notion | Cerrar intento por fallo de verificación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "B-01 | Inicio | Disparador automatico": {
+      "main": [
+        [
+          {
+            "node": "B-00 | Config | Parametros de envio",
             "type": "main",
             "index": 0
           }
