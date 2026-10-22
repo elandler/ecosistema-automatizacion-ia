@@ -38,4 +38,4 @@ Sistema que automatiza la generación, revisión humana y distribución de conte
 ## Documentación
 - Documento final: TBD
 - Dashboard de Control: https://app.notion.com/p/Dashboard-de-Control-Ecosistema-IA-3fd9ef1f77e7809b8a09f630832d01e9?source=copy_link
-- Video demo: TBD
+- Video demo: 
