@@ -6,8 +6,8 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        544,
-        -128
+        -144,
+        -96
       ],
       "id": "4033a1c5-1a8a-40a3-9847-2570c060585e",
       "name": "A-01 | Inicio | Disparador manual"
@@ -30,6 +30,11 @@
               "key": "Estado|select",
               "condition": "equals",
               "optionValue": "Pendiente"
+            },
+            {
+              "key": "Lote de pruebas|rich_text",
+              "condition": "equals",
+              "richTextValue": "VALIDACION-FINAL-01"
             }
           ]
         },
@@ -38,8 +43,8 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 3,
       "position": [
-        736,
-        -16
+        192,
+        -400
       ],
       "id": "815a0551-956e-4cd3-b4f6-1c8535b83da2",
       "name": "A-02 | Notion | Buscar contenidos"
@@ -52,8 +57,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        912,
-        -80
+        352,
+        -256
       ],
       "id": "5444b9c4-718f-4379-8b16-4c3d48ce3373",
       "name": "A-04 | Validación | Verificar datos"
@@ -86,8 +91,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1104,
-        -192
+        544,
+        -384
       ],
       "id": "de6a94bd-51df-43e0-8104-23d162ec1d5e",
       "name": "A-05 | Control | ¿Datos válidos?"
@@ -122,8 +127,8 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 3,
       "position": [
-        1344,
-        -32
+        784,
+        16
       ],
       "id": "d36c16ab-4310-44bc-808f-1619d36e161b",
       "name": "A-06 | Notion | Registrar validación fallida"
@@ -158,8 +163,8 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 2.3,
       "position": [
-        1440,
-        -208
+        1120,
+        -256
       ],
       "id": "d9a5b0f6-b023-4ab9-97f5-f4b1c7d4172e",
       "name": "A-07 | OpenAI | Clasificar contenido",
@@ -175,8 +180,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1584,
-        -496
+        1312,
+        -480
       ],
       "id": "769f5e66-e374-46ef-843b-1c0382d9c2f1",
       "name": "A-08 | Validación | Verificar clasificación IA"
@@ -242,8 +247,8 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 3,
       "position": [
-        2112,
-        -288
+        2128,
+        -336
       ],
       "id": "a9329011-b687-442d-b263-3be6b51120cc",
       "name": "A-10 | Notion | Guardar clasificación",
@@ -275,21 +280,21 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 3,
       "position": [
-        2336,
-        -384
+        2304,
+        -448
       ],
       "id": "a2f0b56a-7ed2-4c76-bab0-0cfa9bc4b1be",
       "name": "A-11 | Notion | Buscar conocimientos"
     },
     {
       "parameters": {
-        "jsCode": "// Obtener la clasificación validada previamente\nconst categoria = $('A-09 | Datos | Preparar clasificación')\n  .item.json.clasificacion;\n\n// Obtener todos los conocimientos activos recuperados de Notion\nconst conocimientos = $input.all().map(item => item.json);\n\n// Seleccionar conocimientos generales y de la categoría solicitada\nconst seleccionados = conocimientos\n  .filter(k =>\n    k.property_activo === true &&\n    (\n      k.property_categoria === 'General' ||\n      k.property_categoria === categoria\n    )\n  )\n  .sort((a, b) =>\n    a.property_tema.localeCompare(\n      b.property_tema,\n      'es',\n      { numeric: true }\n    )\n  );\n\n// Preparar el contexto que recibirá OpenAI\nconst contexto = seleccionados.map(k => ({\n  tema: k.property_tema,\n  tipo: k.property_tipo,\n  categoria: k.property_categoria,\n  contenido: k.property_contenido\n}));\n\nreturn [{\n  json: {\n    categoria,\n    cantidad_conocimientos: contexto.length,\n    conocimientos: contexto,\n    contexto_ia: contexto.map(k =>\n      `[${k.tema}] (${k.tipo} / ${k.categoria})\\n${k.contenido}`\n    ).join('\\n\\n')\n  }\n}];"
+        "jsCode": "// Obtener la clasificación validada previamente\nconst categoria = $('A-09 | Datos | Preparar clasificación')\n  .first().json.clasificacion;\n\n// Obtener todos los conocimientos activos recuperados de Notion\nconst conocimientos = $input.all().map(item => item.json);\n\n// Seleccionar conocimientos generales y de la categoría solicitada\nconst seleccionados = conocimientos\n  .filter(k =>\n    k.property_activo === true &&\n    (\n      k.property_categoria === 'General' ||\n      k.property_categoria === categoria\n    )\n  )\n  .sort((a, b) =>\n    a.property_tema.localeCompare(\n      b.property_tema,\n      'es',\n      { numeric: true }\n    )\n  );\n\n// Preparar el contexto que recibirá OpenAI\nconst contexto = seleccionados.map(k => ({\n  tema: k.property_tema,\n  tipo: k.property_tipo,\n  categoria: k.property_categoria,\n  contenido: k.property_contenido\n}));\n\nreturn [{\n  json: {\n    categoria,\n    cantidad_conocimientos: contexto.length,\n    conocimientos: contexto,\n    contexto_ia: contexto.map(k =>\n      `[${k.tema}] (${k.tipo} / ${k.categoria})\\n${k.contenido}`\n    ).join('\\n\\n')\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2512,
-        -384
+        2496,
+        -432
       ],
       "id": "fe3bbcd8-5d05-4807-97a2-63d5129b2568",
       "name": "A-12 | Conocimiento | Filtrar por categoría"
@@ -327,7 +332,7 @@
       "typeVersion": 2.3,
       "position": [
         2688,
-        -368
+        -384
       ],
       "id": "5d46484c-d645-45fc-82b4-235cc8f44e54",
       "name": "A-13 | OpenAI | Generar borrador",
@@ -343,7 +348,7 @@
       "typeVersion": 2,
       "position": [
         3040,
-        -448
+        -464
       ],
       "id": "4e13aecc-d25a-4c62-a773-990239caa959",
       "name": "A-14 | Validación | Verificar borrador IA"
@@ -445,7 +450,7 @@
         "select": "channel",
         "channelId": {
           "__rl": true,
-          "value": "CONFIGURAR_CANAL_SLACK",
+          "value": "={{ $('A-00 | Config | Parametros de notificacion').first().json.slack_channel_id.trim() }}",
           "mode": "id"
         },
         "text": "={{\n\"📝 NUEVO BORRADOR PENDIENTE DE REVISIÓN\\n\\n\" +\n\"Asunto: \" + $('A-15 | Datos | Preparar borrador').item.json.asunto_ia +\n\"\\n\\nEstado: En revisión\" +\n\"\\nFuentes utilizadas: \" + $('A-15 | Datos | Preparar borrador').item.json.fuentes_utilizadas +\n\"\\n\\nRevisar contenido en Notion:\\n\" +\n\"https://www.notion.so/\" +\n$('A-15 | Datos | Preparar borrador').item.json.id_notion.replace(/-/g, \"\") +\n\"\\n\\nLa aprobación debe realizarse en Notion.\"\n}}",
@@ -454,12 +459,11 @@
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.7,
       "position": [
-        3968,
-        -480
+        4144,
+        -560
       ],
       "id": "734163c5-6ba1-48fe-9acd-aed11ef6754e",
       "name": "A-18 | Slack | Notificar revisión pendiente1",
-      "webhookId": "9def6df9-4eaf-4528-b30c-1f39ff6576ef",
       "retryOnFail": true,
       "onError": "continueErrorOutput"
     },
@@ -536,8 +540,8 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 3,
       "position": [
-        1280,
-        -320
+        752,
+        -432
       ],
       "id": "794ce431-2039-4c09-ba93-053402040d95",
       "name": "A-05B | Notion | Marcar como En proceso"
@@ -556,8 +560,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        4208,
-        144
+        4416,
+        176
       ],
       "id": "33585df4-9663-46cb-9a6a-bd55450f1271",
       "name": "A-ERR | HTTP | Registrar fallo técnico"
@@ -590,8 +594,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1744,
-        -592
+        1504,
+        -576
       ],
       "id": "50c9e979-7ee5-4c4b-80d4-298079a49e75",
       "name": "A-08B | Control | ¿Clasificación válida?"
@@ -626,8 +630,8 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 3,
       "position": [
-        1904,
-        -384
+        1680,
+        -400
       ],
       "id": "fa556189-9b53-4d39-96b8-10f1ab98cb1f",
       "name": "A-08C | Notion | Registrar clasificación inválida"
@@ -667,6 +671,363 @@
       ],
       "id": "0246659d-5225-4fe7-b638-3945401f1578",
       "name": "A-16B | Notion | Registrar borrador no generado o inválido"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "06f817c6-6825-4da6-a915-f3770cf9c2ee",
+              "name": "slack_channel_id",
+              "value": "CONFIGURAR_CANAL_SLACK",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        32,
+        -272
+      ],
+      "id": "b689ef67-1320-4d02-b05f-de1147de6544",
+      "name": "A-00 | Config | Parametros de notificacion"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('A-04 | Validación | Verificar datos').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Slack Thread TS|rich_text",
+              "textContent": "={{ $json.message_timestamp }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        4400,
+        -608
+      ],
+      "id": "6b990a93-7a5b-48a1-bbd8-4093d28d9dfd",
+      "name": "A-19 | Notion | Guardar identificador de hilo Slack",
+      "retryOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "CONFIGURAR_DATASOURCE_EJECUCIONES",
+          "mode": "id"
+        },
+        "title": "={{ 'Generación | ' + $execution.id }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Workflow|select",
+              "selectValue": "A - Generacion"
+            },
+            {
+              "key": "Estado ejecución|select",
+              "selectValue": "En proceso"
+            },
+            {
+              "key": "Etapa|select",
+              "selectValue": "Inicio"
+            },
+            {
+              "key": "Fecha inicio|date",
+              "date": "={{ $now.toISO() }}"
+            },
+            {
+              "key": "ID n8n|rich_text",
+              "textContent": "={{ String($execution.id) }}"
+            },
+            {
+              "key": "Contenido relacionado|relation",
+              "relationValue": [
+                "={{ $('A-04 | Validación | Verificar datos').first().json.id }}"
+              ]
+            },
+            {
+              "key": "Detalle|rich_text",
+              "textContent": "={{ 'Inicio de generación. Datos obligatorios validados. Contenido: ' + $('A-04 | Validación | Verificar datos').first().json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        928,
+        -368
+      ],
+      "id": "6815be70-e2ef-45c7-92a2-9201e2a3b81a",
+      "name": "A-05C | Notion | Registrar inicio de generacion"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('A-05C | Notion | Registrar inicio de generacion').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado ejecución|select",
+              "selectValue": "Finalizada"
+            },
+            {
+              "key": "Etapa|select",
+              "selectValue": "Generacion"
+            },
+            {
+              "key": "Fecha fin|date",
+              "date": "={{ $now.toISO() }}"
+            },
+            {
+              "key": "Resultado negocio|select",
+              "selectValue": "Generado"
+            },
+            {
+              "key": "Detalle|rich_text",
+              "textContent": "={{ 'Borrador generado y guardado en el contenido ' + $('A-04 | Validación | Verificar datos').first().json.id + '. Asunto IA: ' + $('A-15 | Datos | Preparar borrador').item.json.asunto_ia }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        3936,
+        -496
+      ],
+      "id": "b1586754-baa1-47a9-bc50-1cbe2f7942d9",
+      "name": "A-17B | Notion | Registrar borrador generado",
+      "retryOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('A-05C | Notion | Registrar inicio de generacion').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado ejecución|select",
+              "selectValue": "Interrumpida"
+            },
+            {
+              "key": "Etapa|select",
+              "selectValue": "Generacion"
+            },
+            {
+              "key": "Fecha fin|date",
+              "date": "={{ $now.toISO() }}"
+            },
+            {
+              "key": "Detalle|rich_text",
+              "textContent": "={{ 'Fallo técnico durante la generación. Revisar el detalle en el contenido relacionado y en la ejecución n8n: ' + $execution.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        4608,
+        0
+      ],
+      "id": "42df5b83-a3cc-449a-9e27-d9ac29b8aa44",
+      "name": "A-ERRB | Notion | Registrar fallo tecnico en ejecucion"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('A-04 | Validación | Verificar datos').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Error|rich_text",
+              "textContent": "={{ ('Borrador guardado en revisión. Falló la notificación de Slack: ' + ($json.error?.message || $json.error?.description || JSON.stringify($json.error ?? $json))).slice(0, 2000) }}"
+            },
+            {
+              "key": "Ultima ejecucion|date",
+              "date": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        4384,
+        -176
+      ],
+      "id": "2800ffe0-2017-45e7-a025-a0bd820781c4",
+      "name": "A-18E | Notion | Registrar fallo de notificación"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('A-05C | Notion | Registrar inicio de generacion').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado ejecución|select",
+              "selectValue": "Interrumpida"
+            },
+            {
+              "key": "Etapa|select",
+              "selectValue": "Generacion"
+            },
+            {
+              "key": "Fecha fin|date",
+              "date": "={{ $now.toISO() }}"
+            },
+            {
+              "key": "Detalle|rich_text",
+              "textContent": "={{ ('Generación bloqueada por clasificación IA inválida: ' + $('A-08 | Validación | Verificar clasificación IA').first().json.clasificacion_validada.errores.join('; ')).slice(0, 2000) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1888,
+        -384
+      ],
+      "id": "5f8d2fa4-e7c2-4aea-8c26-920b4f185f2d",
+      "name": "A-08D | Notion | Cerrar ejecución por clasificación inválida"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('A-05C | Notion | Registrar inicio de generacion').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado ejecución|select",
+              "selectValue": "Interrumpida"
+            },
+            {
+              "key": "Etapa|select",
+              "selectValue": "Generacion"
+            },
+            {
+              "key": "Fecha fin|date",
+              "date": "={{ $now.toISO() }}"
+            },
+            {
+              "key": "Detalle|rich_text",
+              "textContent": "={{ ($('A-14 | Validación | Verificar borrador IA').first().json.borrador_validado.es_valido\n  ? 'La IA devolvió No generado. No se obtuvo un borrador con los conocimientos proporcionados.'\n  : 'Borrador IA inválido: ' + $('A-14 | Validación | Verificar borrador IA').first().json.borrador_validado.errores.join('; ')\n).slice(0, 2000) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        3888,
+        -128
+      ],
+      "id": "0214c7a1-d69f-412a-8ed3-f6347a09ed0c",
+      "name": "A-16C | Notion | Cerrar ejecución sin borrador válido"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('A-04 | Validación | Verificar datos').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Error|rich_text",
+              "textContent": "={{ ('Slack confirmó la notificación, pero falló el guardado del identificador del hilo. Revisar la ejecución n8n ' + $execution.id + '. Detalle: ' + ($json.error?.message || $json.error?.description || JSON.stringify($json.error ?? $json))).slice(0, 2000) }}"
+            },
+            {
+              "key": "Ultima ejecucion|date",
+              "date": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        4704,
+        -544
+      ],
+      "id": "c925baee-4006-4d7d-8dd7-4f36c727d229",
+      "name": "A-19E | Notion | Registrar fallo al guardar hilo"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -160,
+        -464
+      ],
+      "id": "47632a5c-0945-4b6a-868d-a4bd2f0cdf93",
+      "name": "A-01 | Inicio | Disparador automatico"
     }
   ],
   "pinData": {},
@@ -675,7 +1036,7 @@
       "main": [
         [
           {
-            "node": "A-02 | Notion | Buscar contenidos",
+            "node": "A-00 | Config | Parametros de notificacion",
             "type": "main",
             "index": 0
           }
@@ -864,7 +1225,7 @@
       "main": [
         [
           {
-            "node": "A-18 | Slack | Notificar revisión pendiente1",
+            "node": "A-17B | Notion | Registrar borrador generado",
             "type": "main",
             "index": 0
           }
@@ -882,7 +1243,7 @@
       "main": [
         [
           {
-            "node": "A-07 | OpenAI | Clasificar contenido",
+            "node": "A-05C | Notion | Registrar inicio de generacion",
             "type": "main",
             "index": 0
           }
@@ -891,10 +1252,16 @@
     },
     "A-18 | Slack | Notificar revisión pendiente1": {
       "main": [
-        [],
         [
           {
-            "node": "A-ERR | HTTP | Registrar fallo técnico",
+            "node": "A-19 | Notion | Guardar identificador de hilo Slack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "A-18E | Notion | Registrar fallo de notificación",
             "type": "main",
             "index": 0
           }
@@ -921,7 +1288,103 @@
     },
     "A-08C | Notion | Registrar clasificación inválida": {
       "main": [
+        [
+          {
+            "node": "A-08D | Notion | Cerrar ejecución por clasificación inválida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-00 | Config | Parametros de notificacion": {
+      "main": [
+        [
+          {
+            "node": "A-02 | Notion | Buscar contenidos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-05C | Notion | Registrar inicio de generacion": {
+      "main": [
+        [
+          {
+            "node": "A-07 | OpenAI | Clasificar contenido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-ERR | HTTP | Registrar fallo técnico": {
+      "main": [
+        [
+          {
+            "node": "A-ERRB | Notion | Registrar fallo tecnico en ejecucion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-ERRB | Notion | Registrar fallo tecnico en ejecucion": {
+      "main": [
         []
+      ]
+    },
+    "A-17B | Notion | Registrar borrador generado": {
+      "main": [
+        [
+          {
+            "node": "A-18 | Slack | Notificar revisión pendiente1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "A-18 | Slack | Notificar revisión pendiente1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-16B | Notion | Registrar borrador no generado o inválido": {
+      "main": [
+        [
+          {
+            "node": "A-16C | Notion | Cerrar ejecución sin borrador válido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-19 | Notion | Guardar identificador de hilo Slack": {
+      "main": [
+        [],
+        [
+          {
+            "node": "A-19E | Notion | Registrar fallo al guardar hilo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A-01 | Inicio | Disparador automatico": {
+      "main": [
+        [
+          {
+            "node": "A-00 | Config | Parametros de notificacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
